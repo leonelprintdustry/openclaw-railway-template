@@ -172,6 +172,7 @@ async function syncAllowedOrigins() {
 
 let gatewayProc = null;
 let gatewayStarting = null;
+let gatewayStartLock = false;
 let shuttingDown = false;
 
 function sleep(ms) {
@@ -209,11 +210,21 @@ async function waitForGatewayReady(opts = {}) {
 }
 
 async function startGateway() {
-  if (gatewayProc) return;
   if (!isConfigured()) throw new Error("Gateway cannot start: not configured");
 
   fs.mkdirSync(STATE_DIR, { recursive: true });
   fs.mkdirSync(WORKSPACE_DIR, { recursive: true });
+
+  // Forcefully kill any existing gateway process before attempting a new start
+  if (gatewayProc) {
+    log.warn("gateway", "existing gatewayProc still running — sending SIGKILL before restart");
+    try {
+      gatewayProc.kill("SIGKILL");
+    } catch (err) {
+      log.warn("gateway", `SIGKILL failed: ${err.message}`);
+    }
+    gatewayProc = null;
+  }
 
   const stopResult = await runCmd(OPENCLAW_NODE, clawArgs(["gateway", "stop"]));
   log.info("gateway", `stop existing gateway exit=${stopResult.code}`);
@@ -225,7 +236,13 @@ async function startGateway() {
   } catch (err) {
     log.warn("gateway", `fuser cleanup failed (may be harmless): ${err.message}`);
   }
-  await sleep(500);
+  await sleep(1000);
+
+  // Final guard: if another concurrent path already spawned a process, bail out
+  if (gatewayProc) {
+    log.warn("gateway", "gatewayProc was set by a concurrent call — skipping spawn");
+    return;
+  }
 
   const args = [
     "gateway",
@@ -282,7 +299,18 @@ async function startGateway() {
 async function ensureGatewayRunning() {
   if (!isConfigured()) return { ok: false, reason: "not configured" };
   if (gatewayProc) return { ok: true };
+
+  // If a start is already in progress, wait for it rather than launching another
+  if (gatewayStartLock) {
+    log.info("gateway", "start already in progress (lock held) — waiting for existing start");
+    while (gatewayStartLock) {
+      await sleep(100);
+    }
+    return { ok: gatewayProc !== null };
+  }
+
   if (!gatewayStarting) {
+    gatewayStartLock = true;
     gatewayStarting = (async () => {
       await syncAllowedOrigins();
       await startGateway();
@@ -292,6 +320,7 @@ async function ensureGatewayRunning() {
       }
     })().finally(() => {
       gatewayStarting = null;
+      gatewayStartLock = false;
     });
   }
   await gatewayStarting;
