@@ -9,7 +9,7 @@ import httpProxy from "http-proxy";
 import pty from "node-pty";
 import { WebSocketServer } from "ws";
 
-const PORT = Number.parseInt(process.env.PORT ?? "3000", 10);
+const PORT = Number.parseInt(process.env.PORT ?? "5000", 10);
 const STATE_DIR =
   process.env.OPENCLAW_STATE_DIR?.trim() ||
   path.join(os.homedir(), ".openclaw");
