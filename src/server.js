@@ -266,16 +266,8 @@ async function startGateway() {
   gatewayProc.on("exit", (code, signal) => {
     log.error("gateway", `exited code=${code} signal=${signal}`);
     gatewayProc = null;
-    if (!shuttingDown && isConfigured()) {
-      log.info("gateway", "scheduling auto-restart in 2s...");
-      setTimeout(() => {
-        if (!shuttingDown && !gatewayProc && isConfigured()) {
-          ensureGatewayRunning().catch((err) => {
-            log.error("gateway", `auto-restart failed: ${err.message}`);
-          });
-        }
-      }, 2000);
-    }
+    // Don't auto-restart here - let the wrapper handle restarts via ensureGatewayRunning()
+    // This prevents race conditions where two instances try to start simultaneously
   });
 }
 
