@@ -218,14 +218,14 @@ async function startGateway() {
   const stopResult = await runCmd(OPENCLAW_NODE, clawArgs(["gateway", "stop"]));
   log.info("gateway", `stop existing gateway exit=${stopResult.code}`);
 
-  // Kill any remaining process still holding the internal gateway port
+  // Kill any node processes running the gateway
   try {
-    await runCmd("fuser", ["-k", `${INTERNAL_GATEWAY_PORT}/tcp`], { stdio: "pipe" });
-    log.info("gateway", `fuser killed processes on port ${INTERNAL_GATEWAY_PORT}`);
+    await runCmd("pkill", ["-f", "openclaw.*gateway"], { stdio: "pipe" });
+    log.info("gateway", `pkill killed openclaw gateway processes`);
   } catch (err) {
-    log.warn("gateway", `fuser cleanup failed (may be harmless): ${err.message}`);
+    log.warn("gateway", `pkill cleanup failed (may be harmless): ${err.message}`);
   }
-  await sleep(500);
+  await sleep(1000);
 
   const args = [
     "gateway",
