@@ -1189,23 +1189,23 @@ const server = app.listen(PORT, () => {
   log.info("wrapper", `setup wizard: http://localhost:${PORT}/setup`);
   log.info("wrapper", `web TUI: ${ENABLE_WEB_TUI ? "enabled" : "disabled"}`);
   log.info("wrapper", `configured: ${isConfigured()}`);
-
-  if (isConfigured()) {
-    (async () => {
-      try {
-        log.info("wrapper", "running openclaw doctor --fix...");
-        const dr = await runCmd(OPENCLAW_NODE, clawArgs(["doctor", "--fix"]));
-        log.info("wrapper", `doctor --fix exit=${dr.code}`);
-        if (dr.output) log.info("wrapper", dr.output);
-      } catch (err) {
-        log.warn("wrapper", `doctor --fix failed: ${err.message}`);
-      }
-      await ensureGatewayRunning();
-    })().catch((err) => {
-      log.error("wrapper", `failed to start gateway at boot: ${err.message}`);
-    });
-  }
 });
+
+if (isConfigured()) {
+  (async () => {
+    try {
+      log.info("wrapper", "running openclaw doctor --fix...");
+      const dr = await runCmd(OPENCLAW_NODE, clawArgs(["doctor", "--fix"]));
+      log.info("wrapper", `doctor --fix exit=${dr.code}`);
+      if (dr.output) log.info("wrapper", dr.output);
+    } catch (err) {
+      log.warn("wrapper", `doctor --fix failed: ${err.message}`);
+    }
+    await ensureGatewayRunning();
+  })().catch((err) => {
+    log.error("wrapper", `failed to start gateway at boot: ${err.message}`);
+  });
+}
 
 const tuiWss = createTuiWebSocketServer(server);
 
