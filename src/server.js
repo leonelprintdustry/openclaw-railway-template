@@ -1,3 +1,4 @@
+// Rebuild trigger - 2026-03-25
 import childProcess from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -9,7 +10,7 @@ import httpProxy from "http-proxy";
 import pty from "node-pty";
 import { WebSocketServer } from "ws";
 
-const PORT = Number.parseInt(process.env.PORT ?? "5000", 10);
+const PORT = Number.parseInt(process.env.PORT ?? "8080", 10);
 const STATE_DIR =
   process.env.OPENCLAW_STATE_DIR?.trim() ||
   path.join(os.homedir(), ".openclaw");
@@ -109,7 +110,7 @@ async function getOpenclawInfo() {
 }
 
 const INTERNAL_GATEWAY_PORT = Number.parseInt(
-  process.env.INTERNAL_GATEWAY_PORT ?? "8080",
+  process.env.INTERNAL_GATEWAY_PORT ?? "18789",
   10,
 );
 const INTERNAL_GATEWAY_HOST = process.env.INTERNAL_GATEWAY_HOST ?? "127.0.0.1";
