@@ -219,15 +219,6 @@ async function startGateway() {
   const stopResult = await runCmd(OPENCLAW_NODE, clawArgs(["gateway", "stop"]));
   log.info("gateway", `stop existing gateway exit=${stopResult.code}`);
 
-  // Kill any node processes running the gateway
-  try {
-    await runCmd("pkill", ["-f", "openclaw.*gateway"], { stdio: "pipe" });
-    log.info("gateway", `pkill killed openclaw gateway processes`);
-  } catch (err) {
-    log.warn("gateway", `pkill cleanup failed (may be harmless): ${err.message}`);
-  }
-  await sleep(1000);
-
   const args = [
     "gateway",
     "run",
